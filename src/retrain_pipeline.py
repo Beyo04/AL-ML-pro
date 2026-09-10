@@ -1,10 +1,16 @@
+import os
+from pathlib import Path
 import mlflow
 import mlflow.sklearn
 from sklearn.datasets import load_iris
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
-from src.monitor_drift import check_data_drift
+
+try:
+    from src.monitor_drift import check_data_drift
+except ModuleNotFoundError:
+    from monitor_drift import check_data_drift
 
 def automated_continuous_training():
     print("Checking production data for drift...")
@@ -17,6 +23,9 @@ def automated_continuous_training():
             iris.data, iris.target, test_size=0.2, random_state=42
         )
 
+        # Explicitly set tracking URI to avoid Windows path percent-encoding issues
+        db_path = Path.cwd() / "mlflow.db"
+        mlflow.set_tracking_uri(f"sqlite:///{db_path.as_posix()}")
         mlflow.set_experiment("iris_classification")
 
         with mlflow.start_run(run_name="automated_retrain_run"):
